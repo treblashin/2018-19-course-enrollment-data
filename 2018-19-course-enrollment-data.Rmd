@@ -50,14 +50,23 @@ file_delete(c("s19.xlsx", "f18.xlsx"))
 
 ```{r joining, echo=FALSE, message=FALSE}
 # Use inner_join in order to join the two columns 
+# mutate to find the difference in coruse enrollment from fall to spring
 
 all <-inner_join(s19, f18, by = "course_id", suffix = c("_spring", "_fall")) %>% 
   mutate(difference = u_grad_fall - u_grad_spring)
 
-all$flipped <- ifelse(all$difference > 0,"no", "yes")
+# Filter out courses that have a course enrollment difference of less than 40 
+# Reorder the courses based on the difference in course enrollment
+
 all <- all %>%
   filter(difference > 40 | difference < -40) %>% 
   mutate(course_name_spring = fct_reorder(course_name_spring, difference))
+
+# Create a ggplot graphic
+# Set the x axis as the course name, and the y axis as the difference in course enrollment (will be flipped due to coord_flip)
+# Use geom_bar to create a bar graph
+# Label the x axis, y axis, title, and subtitle
+# Use theme_economist to color the background and change the font
 
 ggplot(data = all, 
              mapping = aes(x = course_name_spring, y = difference)) +
