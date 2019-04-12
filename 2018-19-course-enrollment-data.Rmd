@@ -1,0 +1,73 @@
+---
+title: "Fall 2018/Spring 2019 Course Enrollment Data"
+author: "Albert Shin"
+date: "4/10/2019"
+output: html_document
+---
+
+```{r setup, echo=FALSE, message=FALSE, warning = FALSE}
+# Install packages
+library(ggthemes)
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(fs)
+library(janitor)
+library(viridis)
+```
+
+```{r download, echo=FALSE, message=FALSE}
+# Download file for Spring 2019 course enrollment data
+
+download.file(url = "https://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_3.22.19.xlsx", destfile = "s19.xlsx")
+
+#Use read_excel from the readxl package to read in the data. Argument skip = 3 skips the first three rows when reading in the data
+
+s19 <- read_excel("s19.xlsx", skip = 3) %>% 
+  clean_names() %>% 
+  filter(! is.na(course_name),
+         u_grad >= 5) %>% 
+  select(course_id, course_name, course_title, u_grad)
+
+# Download file for Fall 2018 course enrollment data
+
+download.file(url = "https://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_10.24.18.xlsx", destfile = "f18.xlsx")
+
+#Use read_excel from the readxl package to read in the data. Argument skip = 2 skips the first two rows when reading in the data
+# Clean the names using the clean_names() function from the janitor package so that the column names are easier to work with 
+# Take out courses that do not have a course name or have an enrollment of less than 5 undergraduate students
+# Select course id, course name, course title, and undergraduate enrollment columns.
+
+f18 <- read_excel("f18.xlsx", skip = 2) %>% 
+  clean_names() %>% 
+  filter(! is.na(course_name),
+         u_grad >= 5)
+
+# Delete unnecessary files
+
+file_delete(c("s19.xlsx", "f18.xlsx"))
+```
+
+```{r joining, echo=FALSE, message=FALSE}
+# Use inner_join in order to join the two columns 
+
+all <-inner_join(s19, f18, by = "course_id", suffix = c("_spring", "_fall")) %>% 
+  mutate(difference = u_grad_fall - u_grad_spring)
+
+all$flipped <- ifelse(all$difference > 0,"no", "yes")
+all <- all %>%
+  filter(difference > 40 | difference < -40) %>% 
+  mutate(course_name_spring = fct_reorder(course_name_spring, difference))
+
+ggplot(data = all, 
+             mapping = aes(x = course_name_spring, y = difference)) +
+      geom_bar(stat = "identity") + coord_flip() + 
+  labs(
+    title = "Courses With Biggest Enrollment Change",
+    subtitle = "Courses offered in both Fall 2018 and Spring 2019") + 
+  xlab("") +
+  ylab("Difference in Enrollment") + 
+  theme_economist() + 
+  scale_fill_viridis(discrete = TRUE)
+```
+
