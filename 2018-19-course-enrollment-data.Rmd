@@ -69,14 +69,15 @@ all <- all %>%
 # Use theme_economist to color the background and change the font
 
 ggplot(data = all, 
-             mapping = aes(x = course_name_spring, y = difference)) +
+             mapping = aes(x = course_name_spring, y = difference, fill = "plasma")) +
       geom_bar(stat = "identity") + coord_flip() + 
+  scale_fill_viridis(option="plasma", discrete = TRUE) +
   labs(
     title = "Courses With Biggest Enrollment Change",
     subtitle = "Courses offered in both Fall 2018 and Spring 2019") + 
   xlab("") +
   ylab("Difference in Enrollment") + 
-  theme_economist() + 
-  scale_fill_viridis(discrete = TRUE)
+  theme_economist()
+
 ```
 
